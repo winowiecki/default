@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNS PracticeLog</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --color-patient: #1D4ED8;
+  --color-nursing: #059669;
+  --color-orgsys:  #7C3AED;
+  --color-admin:   #6B7280;
+  --color-accent:  #1E293B;
+  --color-bg:      #F8FAFC;
+  --color-card:    #FFFFFF;
+  --color-border:  #E2E8F0;
+  --color-danger:  #DC2626;
+  --color-muted:   #64748B;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* ---------- Nav ---------- */
+.topnav {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px;
+  flex-wrap: wrap;
+}
+.brand { font-weight: 700; font-size: 17px; padding: 12px 0; white-space: nowrap; letter-spacing: -0.01em; }
+.tabs {
+  display: flex; gap: 4px; margin-left: auto;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  background: none; border: none; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 500;
+  color: var(--color-muted);
+  padding: 14px 12px 12px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--color-accent); }
+.tab-btn.active { color: var(--color-accent); border-bottom-color: var(--color-accent); font-weight: 600; }
+.tab-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; border-radius: 4px; }
+@media (max-width: 640px) {
+  .topnav { padding: 0 12px; }
+  .brand { padding: 10px 0 2px; width: 100%; }
+  .tabs { margin-left: 0; width: 100%; }
+}
+
+/* ---------- Layout ---------- */
+main { flex: 1; width: 100%; max-width: 1060px; margin: 0 auto; padding: 20px; }
+.screen { display: none; }
+.screen.active { display: block; }
+footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-muted);
+  text-align: center;
+  padding: 14px;
+  font-size: 13px;
+}
+h2.screen-title { font-size: 20px; margin: 4px 0 16px; }
+h3 { font-size: 16px; margin: 0 0 12px; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted); margin: 0 0 10px; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font: inherit; font-size: 14px; font-weight: 500;
+  border-radius: 6px; cursor: pointer;
+  padding: 9px 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-accent);
+  transition: background 0.12s, color 0.12s;
+}
+.btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.btn:hover { background: var(--color-bg); }
+.btn-primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.btn-primary:hover { background: #0F172A; }
+.btn-danger { background: #fff; color: var(--color-danger); border: 1px solid var(--color-danger); }
+.btn-danger:hover { background: var(--color-danger); color: #fff; }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+.btn-lg { padding: 16px 28px; font-size: 17px; font-weight: 600; }
+.btn-block { display: block; width: 100%; }
+.btn-link { background: none; border: none; color: var(--color-muted); text-decoration: underline; cursor: pointer; font: inherit; font-size: 13px; padding: 6px; }
+.btn-icon { background: none; border: none; cursor: pointer; padding: 4px 6px; font-size: 15px; border-radius: 4px; color: var(--color-muted); }
+.btn-icon:hover { background: var(--color-bg); color: var(--color-accent); }
+.btn-icon.danger:hover { color: var(--color-danger); }
+.btn-icon:focus-visible { outline: 2px solid var(--color-accent); }
+
+/* ---------- Forms ---------- */
+label.field-label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+label.field-label .opt { font-weight: 400; color: var(--color-muted); }
+input[type="text"], input[type="date"], input[type="datetime-local"], input[type="number"], select, textarea {
+  font: inherit; font-size: 14px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--color-accent);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+  border-color: var(--color-accent);
+}
+textarea { resize: vertical; }
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 4px 0; }
+.check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-accent); flex-shrink: 0; }
+.check-row input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.inline-checks { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.form-row > div { flex: 1; min-width: 140px; }
+
+/* ---------- Sphere badges ---------- */
+.sphere-badge {
+  display: inline-block;
+  font-size: 12px; font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.badge-P { color: var(--color-patient); border-color: var(--color-patient); background: rgba(29,78,216,0.12); }
+.badge-N { color: var(--color-nursing); border-color: var(--color-nursing); background: rgba(5,150,105,0.12); }
+.badge-O { color: var(--color-orgsys); border-color: var(--color-orgsys); background: rgba(124,58,237,0.12); }
+.badge-A { color: var(--color-admin); border-color: var(--color-admin); background: rgba(107,114,128,0.12); }
+
+/* ---------- Dashboard ---------- */
+.dash-center { text-align: center; padding: 28px 18px; }
+.dash-date { font-size: 15px; color: var(--color-muted); margin-bottom: 2px; }
+.dash-clock { font-size: 40px; font-weight: 700; letter-spacing: 0.01em; margin-bottom: 22px; font-variant-numeric: tabular-nums; }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(5,150,105,0.12); color: var(--color-nursing);
+  border: 1px solid var(--color-nursing);
+  font-weight: 700; font-size: 13px; letter-spacing: 0.06em;
+  padding: 5px 14px; border-radius: 999px;
+}
+.status-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-nursing); }
+.elapsed-time {
+  font-size: 44px; font-weight: 700; margin: 14px 0 4px;
+  font-variant-numeric: tabular-nums;
+  animation: gentlepulse 2s ease-in-out infinite;
+}
+@keyframes gentlepulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+.dash-sub { color: var(--color-muted); font-size: 14px; }
+.active-task-name { font-size: 17px; font-weight: 600; margin: 4px 0 6px; }
+.btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+@media (max-width: 640px) {
+  .btn-lg.mobile-full { width: 100%; }
+}
+
+/* ---------- Banner ---------- */
+.banner {
+  background: #FFFBEB; border: 1px solid #F59E0B; color: #92400E;
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  font-size: 14px;
+}
+.banner .banner-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; align-items: center; }
+
+/* ---------- Mini sphere bar ---------- */
+.mini-bar { display: flex; width: 100%; height: 10px; border-radius: 5px; overflow: hidden; background: var(--color-border); }
+.mini-bar .seg { height: 100%; }
+
+/* ---------- Shift cards / History ---------- */
+.shift-head {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; cursor: pointer; font: inherit; color: inherit;
+  padding: 0;
+}
+.shift-head:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: 4px; }
+.shift-head-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.shift-date { font-weight: 700; font-size: 15px; }
+.shift-meta { color: var(--color-muted); font-size: 13px; }
+.shift-chevron { margin-left: auto; color: var(--color-muted); font-size: 12px; }
+.shift-body { border-top: 1px solid var(--color-border); margin-top: 12px; padding-top: 12px; }
+.shift-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+.table-wrap { overflow: auto; max-height: 420px; border: 1px solid var(--color-border); border-radius: 6px; }
+table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
+table.data-table th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--color-bg);
+  text-align: left; font-weight: 600; font-size: 12px;
+  padding: 8px 10px; border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+table.data-table td { padding: 7px 10px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+table.data-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.02); }
+table.data-table tr:last-child td { border-bottom: none; }
+.notes-cell { max-width: 220px; overflow-wrap: break-word; color: var(--color-muted); }
+
+.empty-state {
+  text-align: center; color: var(--color-muted);
+  padding: 40px 20px; font-size: 15px;
+}
+
+/* ---------- Reports ---------- */
+.summary-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.summary-cards .card { flex: 1; min-width: 150px; margin-bottom: 0; text-align: center; padding: 16px 12px; }
+.summary-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.summary-label { font-size: 12px; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-grid .card { margin-bottom: 0; }
+.chart-grid .full { grid-column: 1 / -1; }
+@media (max-width: 760px) { .chart-grid { grid-template-columns: 1fr; } }
+.chart-box { position: relative; height: 260px; }
+.chart-legend { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; font-size: 13px; }
+.chart-legend .item { display: flex; align-items: center; gap: 8px; }
+.chart-legend .swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+.chart-legend .pct { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--color-muted); }
+
+/* ---------- Magnet builder ---------- */
+.step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.step-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--color-accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.entry-pick-list { border: 1px solid var(--color-border); border-radius: 6px; max-height: 340px; overflow: auto; }
+.entry-pick {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-bottom: 1px solid var(--color-border);
+  font-size: 13px; flex-wrap: wrap;
+}
+.entry-pick:nth-child(even) { background: rgba(0,0,0,0.02); }
+.entry-pick:last-child { border-bottom: none; }
+.entry-pick .grow { flex: 1; min-width: 160px; }
+.tally { font-weight: 600; margin-top: 10px; font-size: 14px; }
+
+/* ---------- Settings task list ---------- */
+.task-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 4px; border-bottom: 1px solid var(--color-border);
+  font-size: 14px; flex-wrap: wrap;
+}
+.task-row:last-child { border-bottom: none; }
+.task-row.hidden-task .task-name { color: var(--color-muted); text-decoration: line-through; }
+.task-row .task-name { flex: 1; min-width: 200px; }
+.task-pillars { font-size: 12px; color: var(--color-muted); width: 100%; padding-left: 2px; }
+.sphere-group-label { font-weight: 700; font-size: 13px; margin: 18px 0 4px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-muted); }
+
+/* ---------- Modals ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px;
+}
+.modal {
+  background: var(--color-card);
+  border-radius: 10px;
+  max-width: 560px; width: 100%;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 22px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.modal.wide { max-width: 760px; }
+.modal h3 { margin: 0 0 6px; font-size: 18px; }
+.modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+.modal .modal-sub { color: var(--color-muted); font-size: 13px; margin: 0 0 8px; }
+
+/* ---------- Toasts ---------- */
+#toast-root {
+  position: fixed; bottom: 18px; right: 18px; z-index: 200;
+  display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+  pointer-events: none;
+}
+.toast {
+  background: var(--color-accent); color: #fff;
+  border-radius: 8px; padding: 11px 16px;
+  font-size: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  max-width: 340px;
+  animation: toast-in 0.2s ease-out;
+}
+.toast.warn { background: #92400E; }
+@keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- Exemplar preview ---------- */
+.exemplar { font-size: 14px; }
+.exemplar h1 { font-size: 20px; text-align: center; margin: 0 0 4px; }
+.exemplar .ex-meta { text-align: center; color: var(--color-muted); font-size: 13px; margin-bottom: 4px; }
+.exemplar hr { border: none; border-top: 1px solid var(--color-border); margin: 14px 0; }
+.exemplar h4 { font-size: 14px; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.exemplar p { margin: 0 0 8px; white-space: pre-wrap; }
+
+.muted { color: var(--color-muted); }
+.small { font-size: 13px; }
+.mt0 { margin-top: 0; }
+.filters-grid { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.filters-grid > div { min-width: 140px; }
+.seed-flag { color: var(--color-orgsys); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">CNS PracticeLog</div>
+  <div class="tabs" role="tablist" aria-label="Main navigation">
+    <button class="tab-btn active" data-screen="dashboard" role="tab">Dashboard</button>
+    <button class="tab-btn" data-screen="history" role="tab">History</button>
+    <button class="tab-btn" data-screen="reports" role="tab">Reports</button>
+    <button class="tab-btn" data-screen="magnet" role="tab">Magnet Story</button>
+    <button class="tab-btn" data-screen="settings" role="tab">Settings</button>
+  </div>
+</nav>
+
+<main>
+  <div id="banner-area"></div>
+  <section id="screen-dashboard" class="screen active"></section>
+  <section id="screen-history" class="screen"></section>
+  <section id="screen-reports" class="screen"></section>
+  <section id="screen-magnet" class="screen"></section>
+  <section id="screen-settings" class="screen"></section>
+</main>
+
+<footer>&copy; CNS PracticeLog | winowie9@msu.edu</footer>
+
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<datalist id="project-datalist"></datalist>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   Constants
+===================================================================== */
+const LS_SETTINGS = 'cnspracticelog_settings';
+const LS_SHIFTS   = 'cnspracticelog_shifts';
+
+const SPHERES = {
+  P: { label: 'Patient Direct Care',        color: '#1D4ED8' },
+  N: { label: 'Nurses & Nursing Practice',  color: '#059669' },
+  O: { label: 'Organizations & Systems',    color: '#7C3AED' },
+  A: { label: 'Administrative',             color: '#6B7280' }
+};
+const SPHERE_ORDER = ['P', 'N', 'O', 'A'];
+
+const HFH_PILLARS = [
+  'Compassion',
+  'Relentless Innovation',
+  'Global Standard of Quality',
+  'Health Equity for All',
+  'Results'
+];
+
+const MAGNET_COMPONENTS = [
+  'Transformational Leadership',
+  'Structural Empowerment',
+  'Exemplary Professional Practice',
+  'New Knowledge, Innovations & Improvements',
+  'Empirical Outcomes'
+];
+
+const DEFAULT_TASKS = [
+  // PATIENT DIRECT CARE
+  { name: "Advanced clinical assessment / complex case consultation", sphere: "P", suggestedPillars: ["Compassion", "Global Standard of Quality"] },
+  { name: "Patient and family education / health coaching", sphere: "P", suggestedPillars: ["Compassion", "Health Equity for All"] },
+  { name: "Goals of care / end-of-life / advance directive conversation", sphere: "P", suggestedPillars: ["Compassion", "Health Equity for All"] },
+  { name: "Care coordination and transition management", sphere: "P", suggestedPillars: ["Compassion", "Results"] },
+  { name: "Prescribing / ordering (diagnostics, medications, equipment)", sphere: "P", suggestedPillars: ["Global Standard of Quality", "Results"] },
+  { name: "Ethical conflict facilitation", sphere: "P", suggestedPillars: ["Compassion", "Health Equity for All"] },
+  { name: "Shared decision-making facilitation", sphere: "P", suggestedPillars: ["Compassion", "Health Equity for All"] },
+  { name: "Direct patient care (other)", sphere: "P", suggestedPillars: ["Compassion"] },
+
+  // NURSES AND NURSING PRACTICE
+  { name: "Bedside staff consultation / clinical coaching", sphere: "N", suggestedPillars: ["Global Standard of Quality", "Compassion"] },
+  { name: "Formal staff education (in-service, training, class delivery)", sphere: "N", suggestedPillars: ["Global Standard of Quality", "Relentless Innovation"] },
+  { name: "Competency assessment or validation", sphere: "N", suggestedPillars: ["Global Standard of Quality", "Results"] },
+  { name: "Mentoring and precepting (CNS students and new nurses)", sphere: "N", suggestedPillars: ["Global Standard of Quality", "Relentless Innovation"] },
+  { name: "EBP mentorship with nursing staff", sphere: "N", suggestedPillars: ["Relentless Innovation", "Global Standard of Quality"] },
+  { name: "Orientation development or delivery", sphere: "N", suggestedPillars: ["Global Standard of Quality", "Results"] },
+  { name: "Professional development facilitation", sphere: "N", suggestedPillars: ["Relentless Innovation", "Global Standard of Quality"] },
+  { name: "Work environment / conflict resolution intervention", sphere: "N", suggestedPillars: ["Compassion", "Health Equity for All"] },
+
+  // ORGANIZATIONS AND SYSTEMS
+  { name: "Quality improvement project work (PDSA, data, analysis)", sphere: "O", suggestedPillars: ["Global Standard of Quality", "Results", "Relentless Innovation"] },
+  { name: "EBP project leadership or participation", sphere: "O", suggestedPillars: ["Relentless Innovation", "Global Standard of Quality"] },
+  { name: "Policy, procedure, or protocol development", sphere: "O", suggestedPillars: ["Global Standard of Quality", "Results"] },
+  { name: "Committee, council, or meeting participation", sphere: "O", suggestedPillars: ["Global Standard of Quality", "Results"] },
+  { name: "Magnet documentation and evidence preparation", sphere: "O", suggestedPillars: ["Global Standard of Quality", "Relentless Innovation"] },
+  { name: "Research, scholarship, or dissemination", sphere: "O", suggestedPillars: ["Relentless Innovation", "Global Standard of Quality"] },
+  { name: "Interdisciplinary / interprofessional collaboration", sphere: "O", suggestedPillars: ["Compassion", "Global Standard of Quality"] },
+  { name: "Technology evaluation or implementation", sphere: "O", suggestedPillars: ["Relentless Innovation", "Results"] },
+  { name: "Strategic planning or program development", sphere: "O", suggestedPillars: ["Relentless Innovation", "Results"] },
+  { name: "Regulatory or accreditation preparation", sphere: "O", suggestedPillars: ["Global Standard of Quality", "Results"] },
+  { name: "Advocacy (professional organization, legislative/policy)", sphere: "O", suggestedPillars: ["Health Equity for All", "Relentless Innovation"] },
+
+  // ADMINISTRATIVE
+  { name: "Travel between sites or units", sphere: "A", suggestedPillars: [] },
+  { name: "Administrative documentation / email", sphere: "A", suggestedPillars: [] },
+  { name: "CNS role education or visibility outreach", sphere: "A", suggestedPillars: ["Relentless Innovation"] },
+  { name: "Self-directed professional development", sphere: "A", suggestedPillars: ["Relentless Innovation"] }
+];
+
+/* =====================================================================
+   State
+===================================================================== */
+let settings = null;
+let shifts = [];
+let activeScreen = 'dashboard';
+let bannerDismissed = false;
+let openShiftFromPriorSession = false;
+let expandedShifts = new Set();
+let reportCharts = {};
+let magnetSelected = new Set();
+let magnetShown = [];            // entries currently listed in Step 1
+let magnetDirty = { setting: false, actions: false };
+
+/* =====================================================================
+   Storage
+===================================================================== */
+function persist(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    toast('Storage is nearly full. Export your data before logging new entries.', 'warn');
+  }
+}
+function saveSettings() { persist(LS_SETTINGS, settings); }
+function saveShifts()   { persist(LS_SHIFTS, shifts); }
+
+function blankSettings() {
+  return { name: '', credentials: '', unit: '', department: '', hospital: '', hiddenTaskNames: [], customTasks: [] };
+}
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(LS_SETTINGS);
+    if (!raw) return blankSettings();
+    return Object.assign(blankSettings(), JSON.parse(raw));
+  } catch (e) { return blankSettings(); }
+}
+function loadShifts() {
+  try {
+    const raw = localStorage.getItem(LS_SHIFTS);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+/* =====================================================================
+   Time helpers — minute precision everywhere
+===================================================================== */
+function nowTrunc() { const d = new Date(); d.setSeconds(0, 0); return d; }
+function isoNow() { return nowTrunc().toISOString(); }
+function minutesBetween(aIso, bIso) {
+  return Math.max(0, Math.floor((new Date(bIso) - new Date(aIso)) / 60000));
+}
+function fmtDur(mins) {
+  mins = Math.max(0, Math.floor(mins));
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+}
+function fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+}
+function fmtDateLong(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+}
+function fmtDateShort(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+}
+function localDateStr(d) {
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function toInputDT(iso) {
+  const d = new Date(iso);
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function fromInputDT(v) {
+  const d = new Date(v);
+  d.setSeconds(0, 0);
+  return d.toISOString();
+}
+
+/* =====================================================================
+   Data helpers
+===================================================================== */
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function getOpenShift() { return shifts.find(s => !s.clockOut) || null; }
+function getActiveEntry(shift) { return shift ? (shift.entries.find(e => !e.endTime) || null) : null; }
+function sortedShifts() { return shifts.slice().sort((a, b) => new Date(b.clockIn) - new Date(a.clockIn)); }
+function findShift(id) { return shifts.find(s => s.id === id) || null; }
+function findEntry(shiftId, entryId) {
+  const s = findShift(shiftId);
+  return s ? (s.entries.find(e => e.id === entryId) || null) : null;
+}
+function allTasks() {
+  const merged = DEFAULT_TASKS.concat(settings.customTasks || []);
+  return merged;
+}
+function visibleTasks() {
+  const hidden = new Set(settings.hiddenTaskNames || []);
+  return allTasks().filter(t => !hidden.has(t.name));
+}
+function taskByName(name) { return allTasks().find(t => t.name === name) || null; }
+function entryDurationMins(e) {
+  if (e.endTime) return e.durationMinutes;
+  return minutesBetween(e.startTime, isoNow());
+}
+function shiftDurationMins(s) {
+  return minutesBetween(s.clockIn, s.clockOut || isoNow());
+}
+function sphereMinutes(entries) {
+  const out = { P: 0, N: 0, O: 0, A: 0 };
+  entries.forEach(e => { out[e.sphere] = (out[e.sphere] || 0) + entryDurationMins(e); });
+  return out;
+}
+function allProjects() {
+  const set = new Set();
+  shifts.forEach(s => s.entries.forEach(e => { if (e.project) set.add(e.project); }));
+  return Array.from(set).sort();
+}
+function refreshProjectDatalist() {
+  document.getElementById('project-datalist').innerHTML =
+    allProjects().map(p => '<option value="' + escapeHtml(p) + '"></option>').join('');
+}
+function completedShifts() { return shifts.filter(s => s.clockOut); }
+
+/* =====================================================================
+   Toasts
+===================================================================== */
+function toast(msg, kind) {
+  const root = document.getElementById('toast-root');
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind === 'warn' ? ' warn' : '');
+  el.textContent = msg;
+  root.appendChild(el);
+  setTimeout(() => { el.remove(); }, 4000);
+}
+
+/* =====================================================================
+   Modal infrastructure
+===================================================================== */
+const modalStack = [];
+
+function showModal(html, opts) {
+  opts = opts || {};
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.setAttribute('role', 'dialog');
+  backdrop.setAttribute('aria-modal', 'true');
+  backdrop.innerHTML = '<div class="modal' + (opts.wide ? ' wide' : '') + '">' + html + '</div>';
+  backdrop._dismissible = opts.dismissible !== false;
+  if (backdrop._dismissible) {
+    backdrop.addEventListener('mousedown', e => { if (e.target === backdrop) closeModal(backdrop); });
+  }
+  document.getElementById('modal-root').appendChild(backdrop);
+  modalStack.push(backdrop);
+  const focusable = backdrop.querySelector('input, select, textarea, button');
+  if (focusable) focusable.focus();
+  return backdrop;
+}
+function closeModal(backdrop) {
+  const target = backdrop || modalStack[modalStack.length - 1];
+  if (!target) return;
+  const idx = modalStack.indexOf(target);
+  if (idx >= 0) modalStack.splice(idx, 1);
+  target.remove();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && modalStack.length) {
+    const top = modalStack[modalStack.length - 1];
+    if (top._dismissible) closeModal(top);
+  }
+});
+
+function confirmDialog(opts) {
+  const m = showModal(
+    '<h3>' + escapeHtml(opts.title || 'Please confirm') + '</h3>' +
+    '<p class="modal-sub">' + escapeHtml(opts.message || '') + '</p>' +
+    '<div class="modal-actions">' +
+      '<button class="btn" data-act="cancel">Cancel</button>' +
+      '<button class="btn ' + (opts.danger ? 'btn-danger' : 'btn-primary') + '" data-act="ok">' + escapeHtml(opts.confirmLabel || 'Confirm') + '</button>' +
+    '</div>'
+  );
+  m.querySelector('[data-act="cancel"]').addEventListener('click', () => closeModal(m));
+  m.querySelector('[data-act="ok"]').addEventListener('click', () => { closeModal(m); opts.onConfirm(); });
+}
+
+/* =====================================================================
+   Shared UI fragments
+===================================================================== */
+function sphereBadge(code) {
+  const s = SPHERES[code];
+  if (!s) return '';
+  return '<span class="sphere-badge badge-' + code + '">' + escapeHtml(s.label) + '</span>';
+}
+function miniSphereBar(entries) {
+  const by = sphereMinutes(entries);
+  const total = SPHERE_ORDER.reduce((a, k) => a + by[k], 0);
+  if (total === 0) return '<div class="mini-bar" title="No task time recorded"></div>';
+  let segs = '';
+  SPHERE_ORDER.forEach(k => {
+    if (by[k] > 0) {
+      const pct = (by[k] / total * 100).toFixed(2);
+      segs += '<div class="seg" style="width:' + pct + '%;background:' + SPHERES[k].color + '" title="' +
+        escapeHtml(SPHERES[k].label + ': ' + fmtDur(by[k])) + '"></div>';
+    }
+  });
+  return '<div class="mini-bar">' + segs + '</div>';
+}
+function pillarChecks(name, checked, idPrefix) {
+  return '<div class="inline-checks">' + HFH_PILLARS.map((p, i) => {
+    const id = idPrefix + '-' + i;
+    return '<label class="check-row" for="' + id + '"><input type="checkbox" id="' + id + '" name="' + name + '" value="' + escapeHtml(p) + '"' +
+      (checked.includes(p) ? ' checked' : '') + '> ' + escapeHtml(p) + '</label>';
+  }).join('') + '</div>';
+}
+function sphereChecks(name, checked, idPrefix) {
+  return '<div class="inline-checks">' + SPHERE_ORDER.map(k => {
+    const id = idPrefix + '-' + k;
+    return '<label class="check-row" for="' + id + '"><input type="checkbox" id="' + id + '" name="' + name + '" value="' + k + '"' +
+      (checked.includes(k) ? ' checked' : '') + '> ' + escapeHtml(SPHERES[k].label) + '</label>';
+  }).join('') + '</div>';
+}
+
+/* =====================================================================
+   Screen switching
+===================================================================== */
+function showScreen(name) {
+  activeScreen = name;
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
+  renderScreen(name);
+}
+function renderScreen(name) {
+  if (name === 'dashboard') renderDashboard();
+  else if (name === 'history') renderHistory();
+  else if (name === 'reports') renderReports();
+  else if (name === 'magnet') renderMagnet();
+  else if (name === 'settings') renderSettings();
+}
+
+/* =====================================================================
+   Banner (open shift from prior session)
+===================================================================== */
+function renderBanner() {
+  const area = document.getElementById('banner-area');
+  const open = getOpenShift();
+  if (!open || !openShiftFromPriorSession || bannerDismissed) { area.innerHTML = ''; return; }
+  area.innerHTML =
+    '<div class="banner" role="alert">' +
+      '<span>You have an open shift from <strong>' + escapeHtml(fmtDateLong(open.date)) + ', ' + fmtTime(open.clockIn) + '</strong>. Clock out now or set a custom clock-out time?</span>' +
+      '<span class="banner-actions">' +
+        '<button class="btn btn-sm btn-primary" id="banner-clockout-now">Clock Out Now</button>' +
+        '<button class="btn btn-sm" id="banner-clockout-custom">Set Clock-Out Time</button>' +
+        '<button class="btn-icon" id="banner-dismiss" aria-label="Dismiss banner">&#10005;</button>' +
+      '</span>' +
+    '</div>';
+  document.getElementById('banner-clockout-now').addEventListener('click', () => {
+    performClockOut(open.id, isoNow());
+    openShiftFromPriorSession = false;
+    renderBanner();
+  });
+  document.getElementById('banner-clockout-custom').addEventListener('click', () => openCustomClockOutModal(open));
+  document.getElementById('banner-dismiss').addEventListener('click', () => { bannerDismissed = true; renderBanner(); });
+}
+
+function openCustomClockOutModal(shift) {
+  const m = showModal(
+    '<h3>Set Clock-Out Time</h3>' +
+    '<p class="modal-sub">Shift started ' + escapeHtml(fmtDateLong(shift.date)) + ' at ' + fmtTime(shift.clockIn) + '.</p>' +
+    '<label class="field-label" for="custom-out-dt">Clock-out date and time</label>' +
+    '<input type="datetime-local" id="custom-out-dt" value="' + toInputDT(isoNow()) + '">' +
+    '<div class="modal-actions">' +
+      '<button class="btn" data-act="cancel">Cancel</button>' +
+      '<button class="btn btn-primary" data-act="ok">Save Clock-Out</button>' +
+    '</div>'
+  );
+  m.querySelector('[data-act="cancel"]').addEventListener('click', () => closeModal(m));
+  m.querySelector('[data-act="ok"]').addEventListener('click', () => {
+    const v = m.querySelector('#custom-out-dt').value;
+    if (!v) { toast('Enter a clock-out time.', 'warn'); return; }
+    const outIso = fromInputDT(v);
+    const outMs = new Date(outIso).getTime();
+    if (outMs <= new Date(shift.clockIn).getTime()) {
+      toast('Clock-out must be after clock-in.', 'warn'); return;
+    }
+    if (outMs > Date.now() + 24 * 60 * 60000) {
+      toast('Clock-out cannot be more than 24 hours in the future.', 'warn'); return;
+    }
+    closeModal(m);
+    performClockOut(shift.id, outIso);
+    openShiftFromPriorSession = false;
+    renderBanner();
+  });
+}
+
+/* =====================================================================
+   Clock in / out
+===================================================================== */
+function clockIn() {
+  if (getOpenShift()) { toast('A shift is already open.', 'warn'); return; }
+  const now = nowTrunc();
+  shifts.push({
+    id: crypto.randomUUID(),
+    date: localDateStr(now),
+    clockIn: now.toISOString(),
+    clockOut: null,
+    entries: []
+  });
+  saveShifts();
+  openShiftFromPriorSession = false;
+  bannerDismissed = false;
+  toast('Clocked in at ' + fmtTime(now.toISOString()) + '.');
+  renderBanner();
+  renderDashboard();
+}
+
+function performClockOut(shiftId, outIso) {
+  const shift = findShift(shiftId);
+  if (!shift) return;
+  const active = getActiveEntry(shift);
+  if (active) {
+    active.endTime = outIso;
+    active.durationMinutes = minutesBetween(active.startTime, outIso);
+  }
+  shift.clockOut = outIso;
+  saveShifts();
+  toast('Clocked out. Shift total: ' + fmtDur(shiftDurationMins(shift)) + '.');
+  if (activeScreen === 'dashboard') renderDashboard();
+  else renderScreen(activeScreen);
+}
+
+function confirmClockOut() {
+  const open = getOpenShift();
+  if (!open) return;
+  const active = getActiveEntry(open);
+  confirmDialog({
+    title: 'Clock out?',
+    message: 'Shift started at ' + fmtTime(open.clockIn) + ' (' + fmtDur(shiftDurationMins(open)) + ' elapsed).' +
+      (active ? ' The running task "' + active.taskName + '" will be ended at the clock-out time.' : ''),
+    confirmLabel: 'Clock Out',
+    danger: true,
+    onConfirm: () => performClockOut(open.id, isoNow())
+  });
+}
+
+/* =====================================================================
+   Task entry modal (start / switch / edit / retroactive)
+===================================================================== */
+function taskOptionsHtml(selectedName) {
+  const tasks = visibleTasks();
+  let extra = '';
+  if (selectedName && !tasks.some(t => t.name === selectedName)) {
+    extra = '<option value="' + escapeHtml(selectedName) + '" selected>' + escapeHtml(selectedName) + '</option>';
+  }
+  const groups = SPHERE_ORDER.map(k => {
+    const inSphere = tasks.filter(t => t.sphere === k);
+    if (!inSphere.length) return '';
+    return '<optgroup label="' + escapeHtml(SPHERES[k].label) + '">' +
+      inSphere.map(t => '<option value="' + escapeHtml(t.name) + '"' + (t.name === selectedName ? ' selected' : '') + '>' + escapeHtml(t.name) + '</option>').join('') +
+      '</optgroup>';
+  }).join('');
+  return '<option value="" disabled' + (selectedName ? '' : ' selected') + '>Select a task&hellip;</option>' + extra + groups;
+}
+
+/**
+ * mode: 'start' (start/switch within open shift) | 'edit' | 'retro'
+ * opts: { mode, title, shiftId, entry, switchFrom }
+ */
+function openTaskModal(opts) {
+  refreshProjectDatalist();
+  const entry = opts.entry || null;
+  const withTimes = opts.mode === 'edit' || opts.mode === 'retro';
+  const pillars = entry ? entry.pillars : [];
+  const shift = findShift(opts.shiftId);
+
+  let timesHtml = '';
+  if (withTimes) {
+    const startVal = entry ? toInputDT(entry.startTime) : (shift ? toInputDT(shift.clockIn) : toInputDT(isoNow()));
+    const endVal = entry ? (entry.endTime ? toInputDT(entry.endTime) : '') : (shift && shift.clockOut ? toInputDT(shift.clockOut) : toInputDT(isoNow()));
+    const endOptional = !!(entry && !entry.endTime);
+    timesHtml =
+      '<div class="form-row">' +
+        '<div><label class="field-label" for="tm-start">Start time</label>' +
+        '<input type="datetime-local" id="tm-start" value="' + startVal + '"></div>' +
+        '<div><label class="field-label" for="tm-end">End time' + (endOptional ? ' <span class="opt">(blank = still running)</span>' : '') + '</label>' +
+        '<input type="datetime-local" id="tm-end" value="' + endVal + '"></div>' +
+      '</div>';
+  }
+
+  const m = showModal(
+    '<h3>' + escapeHtml(opts.title) + '</h3>' +
+    '<label class="field-label" for="tm-task">Task <span class="opt">(required)</span></label>' +
+    '<select id="tm-task">' + taskOptionsHtml(entry ? entry.taskName : '') + '</select>' +
+    timesHtml +
+    '<label class="field-label" for="tm-project">Project <span class="opt">(optional)</span></label>' +
+    '<input type="text" id="tm-project" list="project-datalist" value="' + escapeHtml(entry ? entry.project : '') + '" autocomplete="off">' +
+    '<label class="field-label">HFH Pillars <span class="opt">(optional)</span></label>' +
+    pillarChecks('tm-pillars', pillars, 'tm-pil') +
+    '<label class="field-label" for="tm-notes">Notes <span class="opt">(optional)</span></label>' +
+    '<textarea id="tm-notes" rows="3">' + escapeHtml(entry ? entry.notes : '') + '</textarea>' +
+    '<label class="check-row" for="tm-seed" style="margin-top:12px"><input type="checkbox" id="tm-seed"' + (entry && entry.isMagnetSeed ? ' checked' : '') + '> <strong>Flag as Magnet Story Seed</strong></label>' +
+    '<div id="tm-seed-note-wrap" style="display:' + (entry && entry.isMagnetSeed ? 'block' : 'none') + '">' +
+      '<label class="field-label" for="tm-seed-note">Brief narrative note for this entry</label>' +
+      '<textarea id="tm-seed-note" rows="3">' + escapeHtml(entry ? entry.magnetNote : '') + '</textarea>' +
+    '</div>' +
+    '<div class="modal-actions">' +
+      '<button class="btn" data-act="cancel">Cancel</button>' +
+      '<button class="btn btn-primary" data-act="save">' + (opts.mode === 'start' ? 'Start' : 'Save') + '</button>' +
+    '</div>'
+  );
+
+  const taskSel = m.querySelector('#tm-task');
+  taskSel.addEventListener('change', () => {
+    const t = taskByName(taskSel.value);
+    const suggested = t ? t.suggestedPillars : [];
+    m.querySelectorAll('input[name="tm-pillars"]').forEach(cb => { cb.checked = suggested.includes(cb.value); });
+  });
+  const seedCb = m.querySelector('#tm-seed');
+  seedCb.addEventListener('change', () => {
+    m.querySelector('#tm-seed-note-wrap').style.display = seedCb.checked ? 'block' : 'none';
+  });
+  m.querySelector('[data-act="cancel"]').addEventListener('click', () => closeModal(m));
+  m.querySelector('[data-act="save"]').addEventListener('click', () => {
+    const taskName = taskSel.value;
+    if (!taskName) { toast('Select a task.', 'warn'); return; }
+    const t = taskByName(taskName);
+    const data = {
+      taskName: taskName,
+      sphere: t ? t.sphere : (entry ? entry.sphere : 'A'),
+      project: m.querySelector('#tm-project').value.trim(),
+      pillars: Array.from(m.querySelectorAll('input[name="tm-pillars"]:checked')).map(cb => cb.value),
+      notes: m.querySelector('#tm-notes').value.trim(),
+      isMagnetSeed: seedCb.checked,
+      magnetNote: seedCb.checked ? m.querySelector('#tm-seed-note').value.trim() : ''
+    };
+
+    if (withTimes) {
+      const startV = m.querySelector('#tm-start').value;
+      const endV = m.querySelector('#tm-end').value;
+      if (!startV) { toast('Enter a start time.', 'warn'); return; }
+      const endOptional = !!(entry && !entry.endTime);
+      if (!endV && !endOptional) { toast('Enter an end time.', 'warn'); return; }
+      data.startTime = fromInputDT(startV);
+      data.endTime = endV ? fromInputDT(endV) : null;
+      if (data.endTime && new Date(data.endTime) < new Date(data.startTime)) {
+        toast('End time must not be before start time.', 'warn'); return;
+      }
+      data.durationMinutes = data.endTime ? minutesBetween(data.startTime, data.endTime) : 0;
+    }
+
+    closeModal(m);
+    opts.onSave(data);
+  });
+}
+
+function startTaskFlow(switching) {
+  const open = getOpenShift();
+  if (!open) return;
+  openTaskModal({
+    mode: 'start',
+    title: switching ? 'Switch Task' : 'Start Task',
+    shiftId: open.id,
+    onSave: data => {
+      const now = isoNow();
+      const active = getActiveEntry(open);
+      if (active) {
+        active.endTime = now;
+        active.durationMinutes = minutesBetween(active.startTime, now);
+      }
+      open.entries.push({
+        id: crypto.randomUUID(),
+        taskName: data.taskName,
+        sphere: data.sphere,
+        pillars: data.pillars,
+        project: data.project,
+        startTime: now,
+        endTime: null,
+        durationMinutes: 0,
+        notes: data.notes,
+        isMagnetSeed: data.isMagnetSeed,
+        magnetNote: data.magnetNote
+      });
+      saveShifts();
+      toast((switching ? 'Switched to' : 'Started') + ' "' + data.taskName + '".');
+      renderDashboard();
+    }
+  });
+}
+
+function endActiveTask() {
+  const open = getOpenShift();
+  const active = getActiveEntry(open);
+  if (!active) return;
+  const now = isoNow();
+  active.endTime = now;
+  active.durationMinutes = minutesBetween(active.startTime, now);
+  saveShifts();
+  toast('Ended "' + active.taskName + '" (' + fmtDur(active.durationMinutes) + ').');
+  renderDashboard();
+}
+
+/* =====================================================================
+   Dashboard
+===================================================================== */
+function renderDashboard() {
+  renderBanner();
+  const el = document.getElementById('screen-dashboard');
+  const open = getOpenShift();
+  const now = nowTrunc();
+
+  if (!open) {
+    const last = completedShifts().sort((a, b) => new Date(b.clockIn) - new Date(a.clockIn))[0];
+    let lastCard = '';
+    if (last) {
+      lastCard =
+        '<div class="card">' +
+          '<div class="card-title">Most Recent Shift</div>' +
+          '<div class="shift-head-top">' +
+            '<span class="shift-date">' + escapeHtml(fmtDateLong(last.date)) + '</span>' +
+            '<span class="shift-meta">' + fmtTime(last.clockIn) + ' &ndash; ' + fmtTime(last.clockOut) + '</span>' +
+            '<span class="shift-meta"><strong>' + fmtDur(shiftDurationMins(last)) + '</strong> total &middot; ' + last.entries.length + ' ' + (last.entries.length === 1 ? 'entry' : 'entries') + '</span>' +
+          '</div>' +
+          '<div style="margin-top:10px">' + miniSphereBar(last.entries) + '</div>' +
+        '</div>';
+    } else {
+      lastCard = '<div class="card"><div class="empty-state">No shifts logged yet. Click &lsquo;Clock In&rsquo; to begin tracking your CNS practice time.</div></div>';
+    }
+    el.innerHTML =
+      '<div class="card dash-center">' +
+        '<div class="dash-date">' + escapeHtml(now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })) + '</div>' +
+        '<div class="dash-clock" id="dash-clock">' + fmtTime(now.toISOString()) + '</div>' +
+        '<button class="btn btn-primary btn-lg mobile-full" id="btn-clock-in">Clock In</button>' +
+      '</div>' +
+      lastCard;
+    document.getElementById('btn-clock-in').addEventListener('click', clockIn);
+    return;
+  }
+
+  // Clocked in
+  const active = getActiveEntry(open);
+  let taskPanel;
+  if (active) {
+    taskPanel =
+      '<div class="card dash-center">' +
+        '<div class="card-title mt0">Active Task</div>' +
+        '<div class="active-task-name">' + escapeHtml(active.taskName) + '</div>' +
+        '<div style="margin-bottom:6px">' + sphereBadge(active.sphere) +
+          (active.project ? ' <span class="shift-meta">Project: ' + escapeHtml(active.project) + '</span>' : '') +
+          (active.isMagnetSeed ? ' <span class="seed-flag" title="Magnet Story Seed">&#9733; Seed</span>' : '') +
+        '</div>' +
+        '<div class="dash-sub">Active for <strong id="active-dur">' + fmtDur(entryDurationMins(active)) + '</strong></div>' +
+        '<div class="btn-row">' +
+          '<button class="btn" id="btn-switch-task">Switch Task</button>' +
+          '<button class="btn" id="btn-end-task">End Task</button>' +
+        '</div>' +
+      '</div>';
+  } else {
+    taskPanel =
+      '<div class="card dash-center">' +
+        '<div class="card-title mt0">Active Task</div>' +
+        '<div class="dash-sub" style="margin-bottom:12px">No task running.</div>' +
+        '<button class="btn btn-primary" id="btn-start-task">Start Task</button>' +
+      '</div>';
+  }
+
+  el.innerHTML =
+    '<div class="card dash-center">' +
+      '<span class="status-badge"><span class="dot"></span>CLOCKED IN &middot; since ' + fmtTime(open.clockIn) + '</span>' +
+      '<div class="elapsed-time" id="dash-elapsed">' + fmtDur(shiftDurationMins(open)) + '</div>' +
+      '<div class="dash-sub">Shift started ' + escapeHtml(fmtDateLong(open.date)) + '</div>' +
+    '</div>' +
+    taskPanel +
+    (open.entries.length ?
+      '<div class="card">' +
+        '<div class="card-title">This Shift &middot; ' + open.entries.length + ' ' + (open.entries.length === 1 ? 'entry' : 'entries') + '</div>' +
+        miniSphereBar(open.entries) +
+      '</div>' : '') +
+    '<div class="dash-center" style="padding-top:4px">' +
+      '<button class="btn btn-danger btn-lg mobile-full" id="btn-clock-out">Clock Out</button>' +
+    '</div>';
+
+  const sw = document.getElementById('btn-switch-task');
+  if (sw) sw.addEventListener('click', () => startTaskFlow(true));
+  const et = document.getElementById('btn-end-task');
+  if (et) et.addEventListener('click', endActiveTask);
+  const st = document.getElementById('btn-start-task');
+  if (st) st.addEventListener('click', () => startTaskFlow(false));
+  document.getElementById('btn-clock-out').addEventListener('click', confirmClockOut);
+}
+
+/* Minute ticker: refresh time displays without full re-render */
+function tick() {
+  const clock = document.getElementById('dash-clock');
+  if (clock) clock.textContent = fmtTime(isoNow());
+  const open = getOpenShift();
+  const elapsed = document.getElementById('dash-elapsed');
+  if (elapsed && open) elapsed.textContent = fmtDur(shiftDurationMins(open));
+  const activeDur = document.getElementById('active-dur');
+  const active = getActiveEntry(open);
+  if (activeDur && active) activeDur.textContent = fmtDur(entryDurationMins(active));
+}
+
+/* =====================================================================
+   History
+===================================================================== */
+function renderHistory() {
+  const el = document.getElementById('screen-history');
+  if (!el.dataset.init) {
+    el.dataset.init = '1';
+    el.innerHTML =
+      '<h2 class="screen-title">History</h2>' +
+      '<div class="card">' +
+        '<div class="filters-grid">' +
+          '<div><label class="field-label mt0" for="hf-from" style="margin-top:0">From</label><input type="date" id="hf-from"></div>' +
+          '<div><label class="field-label" for="hf-to" style="margin-top:0">To</label><input type="date" id="hf-to"></div>' +
+          '<div style="flex:1;min-width:200px"><label class="field-label" style="margin-top:0">Sphere</label>' +
+            '<div class="inline-checks">' + SPHERE_ORDER.map(k =>
+              '<label class="check-row" for="hf-sph-' + k + '"><input type="checkbox" id="hf-sph-' + k + '" class="hf-sphere" value="' + k + '" checked> ' + k + '</label>'
+            ).join('') + '</div>' +
+          '</div>' +
+          '<div><label class="field-label" for="hf-project" style="margin-top:0">Project</label><input type="text" id="hf-project" placeholder="Filter by project"></div>' +
+          '<div><label class="check-row" for="hf-seed" style="margin-top:0"><input type="checkbox" id="hf-seed"> Magnet Seeds only</label></div>' +
+          '<div><button class="btn btn-sm" id="hf-clear">Clear Filters</button></div>' +
+        '</div>' +
+      '</div>' +
+      '<div id="history-list"></div>';
+    el.querySelectorAll('#hf-from, #hf-to, #hf-project, #hf-seed, .hf-sphere').forEach(inp => {
+      inp.addEventListener('input', renderHistoryList);
+    });
+    document.getElementById('hf-clear').addEventListener('click', () => {
+      document.getElementById('hf-from').value = '';
+      document.getElementById('hf-to').value = '';
+      document.getElementById('hf-project').value = '';
+      document.getElementById('hf-seed').checked = false;
+      el.querySelectorAll('.hf-sphere').forEach(cb => { cb.checked = true; });
+      renderHistoryList();
+    });
+  }
+  renderHistoryList();
+}
+
+function historyFilters() {
+  return {
+    from: document.getElementById('hf-from').value,
+    to: document.getElementById('hf-to').value,
+    spheres: new Set(Array.from(document.querySelectorAll('.hf-sphere:checked')).map(cb => cb.value)),
+    seedOnly: document.getElementById('hf-seed').checked,
+    project: document.getElementById('hf-project').value.trim().toLowerCase()
+  };
+}
+function entryMatchesFilters(e, f) {
+  if (!f.spheres.has(e.sphere)) return false;
+  if (f.seedOnly && !e.isMagnetSeed) return false;
+  if (f.project && !(e.project || '').toLowerCase().includes(f.project)) return false;
+  return true;
+}
+function filtersAreDefault(f) {
+  return !f.from && !f.to && !f.seedOnly && !f.project && f.spheres.size === 4;
+}
+
+function renderHistoryList() {
+  const list = document.getElementById('history-list');
+  if (!shifts.length) {
+    list.innerHTML = '<div class="card"><div class="empty-state">No shifts logged yet. Click &lsquo;Clock In&rsquo; on the Dashboard to begin tracking.</div></div>';
+    return;
+  }
+  const f = historyFilters();
+  const defaultFilters = filtersAreDefault(f);
+  const rows = [];
+  sortedShifts().forEach(shift => {
+    if (f.from && shift.date < f.from) return;
+    if (f.to && shift.date > f.to) return;
+    const matching = shift.entries.filter(e => entryMatchesFilters(e, f));
+    if (!defaultFilters && matching.length === 0 && (f.seedOnly || f.project || f.spheres.size < 4)) return;
+    rows.push(shiftCardHtml(shift, matching, defaultFilters));
+  });
+  if (!rows.length) {
+    list.innerHTML = '<div class="card"><div class="empty-state">No shifts match the current filters.</div></div>';
+    return;
+  }
+  list.innerHTML = rows.join('');
+  attachHistoryHandlers(list);
+}
+
+function shiftCardHtml(shift, matchingEntries, defaultFilters) {
+  const expanded = expandedShifts.has(shift.id);
+  const open = !shift.clockOut;
+  const entriesToShow = defaultFilters ? shift.entries : matchingEntries;
+  const head =
+    '<button class="shift-head" data-toggle-shift="' + shift.id + '" aria-expanded="' + expanded + '">' +
+      '<div class="shift-head-top">' +
+        '<span class="shift-date">' + escapeHtml(fmtDateLong(shift.date)) + '</span>' +
+        '<span class="shift-meta">' + fmtTime(shift.clockIn) + ' &ndash; ' + (shift.clockOut ? fmtTime(shift.clockOut) : '<em>open</em>') + '</span>' +
+        '<span class="shift-meta"><strong>' + fmtDur(shiftDurationMins(shift)) + '</strong></span>' +
+        '<span class="shift-meta">' + shift.entries.length + ' ' + (shift.entries.length === 1 ? 'entry' : 'entries') + '</span>' +
+        '<span class="shift-chevron">' + (expanded ? '&#9650;' : '&#9660;') + '</span>' +
+      '</div>' +
+      '<div style="margin-top:8px">' + miniSphereBar(shift.entries) + '</div>' +
+    '</button>';
+
+  let body = '';
+  if (expanded) {
+    const sorted = entriesToShow.slice().sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    const tableRows = sorted.map(e =>
+      '<tr>' +
+        '<td>' + fmtTime(e.startTime) + '</td>' +
+        '<td>' + escapeHtml(e.taskName) + '</td>' +
+        '<td>' + sphereBadge(e.sphere) + '</td>' +
+        '<td>' + escapeHtml(e.project || '—') + '</td>' +
+        '<td>' + (e.endTime ? fmtDur(e.durationMinutes) : fmtDur(entryDurationMins(e)) + ' <em class="muted">(running)</em>') + '</td>' +
+        '<td class="notes-cell">' + (e.pillars.length ? escapeHtml(e.pillars.join(', ')) : '—') + '</td>' +
+        '<td>' + (e.isMagnetSeed ? '<span class="seed-flag" title="Magnet Story Seed">&#9733;</span>' : '—') + '</td>' +
+        '<td class="notes-cell">' + escapeHtml(e.notes || '') + (e.magnetNote ? '<br><em>Seed note: ' + escapeHtml(e.magnetNote) + '</em>' : '') + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn-icon" data-edit-entry="' + e.id + '" data-shift="' + shift.id + '" aria-label="Edit entry" title="Edit">&#9998;</button>' +
+          '<button class="btn-icon danger" data-del-entry="' + e.id + '" data-shift="' + shift.id + '" aria-label="Delete entry" title="Delete">&#128465;</button>' +
+        '</td>' +
+      '</tr>'
+    ).join('');
+    body =
+      '<div class="shift-body">' +
+        (sorted.length ?
+          '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+            '<th>Start Time</th><th>Task</th><th>Sphere</th><th>Project</th><th>Duration</th><th>HFH Pillars</th><th>Seed</th><th>Notes</th><th></th>' +
+          '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
+          : '<div class="empty-state" style="padding:16px">' + (defaultFilters ? 'No entries recorded for this shift.' : 'No entries in this shift match the current filters.') + '</div>') +
+        '<div class="shift-actions">' +
+          '<button class="btn btn-sm" data-add-entry="' + shift.id + '">+ Add Entry</button>' +
+          '<button class="btn btn-sm btn-danger" data-del-shift="' + shift.id + '">Delete Shift</button>' +
+        '</div>' +
+      '</div>';
+  }
+  return '<div class="card">' + head + body + '</div>';
+}
+
+function attachHistoryHandlers(root) {
+  root.querySelectorAll('[data-toggle-shift]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.toggleShift;
+      if (expandedShifts.has(id)) expandedShifts.delete(id); else expandedShifts.add(id);
+      renderHistoryList();
+    });
+  });
+  root.querySelectorAll('[data-edit-entry]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openEditEntryModal(btn.dataset.shift, btn.dataset.editEntry);
+    });
+  });
+  root.querySelectorAll('[data-del-entry]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const shift = findShift(btn.dataset.shift);
+      const entry = findEntry(btn.dataset.shift, btn.dataset.delEntry);
+      if (!shift || !entry) return;
+      confirmDialog({
+        title: 'Delete entry?',
+        message: 'Delete "' + entry.taskName + '" (' + fmtDur(entryDurationMins(entry)) + ') from ' + fmtDateLong(shift.date) + '? This cannot be undone.',
+        confirmLabel: 'Delete', danger: true,
+        onConfirm: () => {
+          shift.entries = shift.entries.filter(x => x.id !== entry.id);
+          saveShifts();
+          toast('Entry deleted.');
+          renderHistoryList();
+        }
+      });
+    });
+  });
+  root.querySelectorAll('[data-del-shift]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const shift = findShift(btn.dataset.delShift);
+      if (!shift) return;
+      confirmDialog({
+        title: 'Delete shift?',
+        message: 'Delete the entire shift from ' + fmtDateLong(shift.date) + ' including ' + shift.entries.length + ' ' + (shift.entries.length === 1 ? 'entry' : 'entries') + '? This cannot be undone.',
+        confirmLabel: 'Delete Shift', danger: true,
+        onConfirm: () => {
+          shifts = shifts.filter(s => s.id !== shift.id);
+          saveShifts();
+          toast('Shift deleted.');
+          renderHistoryList();
+          renderBanner();
+        }
+      });
+    });
+  });
+  root.querySelectorAll('[data-add-entry]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const shift = findShift(btn.dataset.addEntry);
+      if (!shift) return;
+      openTaskModal({
+        mode: 'retro',
+        title: 'Add Entry — ' + fmtDateLong(shift.date),
+        shiftId: shift.id,
+        onSave: data => {
+          shift.entries.push({
+            id: crypto.randomUUID(),
+            taskName: data.taskName,
+            sphere: data.sphere,
+            pillars: data.pillars,
+            project: data.project,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            durationMinutes: data.durationMinutes,
+            notes: data.notes,
+            isMagnetSeed: data.isMagnetSeed,
+            magnetNote: data.magnetNote
+          });
+          saveShifts();
+          toast('Entry added.');
+          renderHistoryList();
+        }
+      });
+    });
+  });
+}
+
+function openEditEntryModal(shiftId, entryId) {
+  const entry = findEntry(shiftId, entryId);
+  if (!entry) return;
+  openTaskModal({
+    mode: 'edit',
+    title: 'Edit Entry',
+    shiftId: shiftId,
+    entry: entry,
+    onSave: data => {
+      Object.assign(entry, data);
+      saveShifts();
+      toast('Entry saved.');
+      renderScreen(activeScreen);
+    }
+  });
+}
+
+/* =====================================================================
+   Reports
+===================================================================== */
+function renderReports() {
+  const el = document.getElementById('screen-reports');
+  if (!el.dataset.init) {
+    el.dataset.init = '1';
+    const now = new Date();
+    const first = localDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+    const last = localDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    el.innerHTML =
+      '<h2 class="screen-title">Reports</h2>' +
+      '<div class="card"><div class="filters-grid">' +
+        '<div><label class="field-label" for="rp-from" style="margin-top:0">From</label><input type="date" id="rp-from" value="' + first + '"></div>' +
+        '<div><label class="field-label" for="rp-to" style="margin-top:0">To</label><input type="date" id="rp-to" value="' + last + '"></div>' +
+      '</div></div>' +
+      '<div id="report-body"></div>';
+    el.querySelector('#rp-from').addEventListener('input', renderReportBody);
+    el.querySelector('#rp-to').addEventListener('input', renderReportBody);
+  }
+  renderReportBody();
+}
+
+function shiftsInRange(from, to) {
+  return shifts.filter(s => (!from || s.date >= from) && (!to || s.date <= to));
+}
+
+function destroyReportCharts() {
+  Object.values(reportCharts).forEach(c => { try { c.destroy(); } catch (e) {} });
+  reportCharts = {};
+}
+
+function renderReportBody() {
+  const body = document.getElementById('report-body');
+  destroyReportCharts();
+  const from = document.getElementById('rp-from').value;
+  const to = document.getElementById('rp-to').value;
+  const inRange = shiftsInRange(from, to);
+  const entries = inRange.flatMap(s => s.entries);
+
+  if (!inRange.length) {
+    body.innerHTML = '<div class="card"><div class="empty-state">No data in the selected date range.</div></div>';
+    return;
+  }
+
+  const totalShiftMins = inRange.reduce((a, s) => a + shiftDurationMins(s), 0);
+  const avg = inRange.length ? Math.floor(totalShiftMins / inRange.length) : 0;
+  const seeds = entries.filter(e => e.isMagnetSeed);
+
+  const seedRows = seeds.map(e => {
+    const parent = inRange.find(s => s.entries.includes(e));
+    return '<tr>' +
+      '<td>' + escapeHtml(fmtDateShort(parent ? parent.date : '')) + '</td>' +
+      '<td>' + escapeHtml(e.taskName) + '</td>' +
+      '<td>' + sphereBadge(e.sphere) + '</td>' +
+      '<td>' + escapeHtml(e.project || '—') + '</td>' +
+      '<td>' + fmtDur(entryDurationMins(e)) + '</td>' +
+      '<td class="notes-cell">' + escapeHtml(e.magnetNote || e.notes || '') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  body.innerHTML =
+    '<div class="summary-cards">' +
+      '<div class="card"><div class="summary-value">' + fmtDur(totalShiftMins) + '</div><div class="summary-label">Total Hours Logged</div></div>' +
+      '<div class="card"><div class="summary-value">' + inRange.length + '</div><div class="summary-label">Total Shifts</div></div>' +
+      '<div class="card"><div class="summary-value">' + fmtDur(avg) + '</div><div class="summary-label">Average per Shift</div></div>' +
+    '</div>' +
+    '<div class="chart-grid">' +
+      '<div class="card"><h3>Sphere Distribution</h3><div class="chart-box"><canvas id="chart-sphere" role="img" aria-label="Doughnut chart of time by CNS sphere"></canvas></div><div class="chart-legend" id="sphere-legend"></div></div>' +
+      '<div class="card"><h3>HFH Pillar Breakdown</h3><div class="chart-box" style="height:340px"><canvas id="chart-pillar" role="img" aria-label="Bar chart of time by HFH pillar"></canvas></div></div>' +
+      '<div class="card full"><h3>Daily Activity</h3><div class="chart-box"><canvas id="chart-daily" role="img" aria-label="Line chart of hours logged per day"></canvas></div></div>' +
+    '</div>' +
+    '<div class="card" style="margin-top:16px"><h3>Magnet Seeds Summary</h3>' +
+      (seeds.length ?
+        '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+          '<th>Date</th><th>Task</th><th>Sphere</th><th>Project</th><th>Duration</th><th>Narrative Note</th>' +
+        '</tr></thead><tbody>' + seedRows + '</tbody></table></div>'
+        : '<div class="empty-state" style="padding:16px">No entries flagged as Magnet Seeds in this range.</div>') +
+    '</div>';
+
+  buildReportCharts(inRange, entries, from, to);
+}
+
+function buildReportCharts(inRange, entries, from, to) {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  Chart.defaults.color = '#64748B';
+
+  // 1. Sphere doughnut
+  const bySphere = sphereMinutes(entries);
+  const totalSphere = SPHERE_ORDER.reduce((a, k) => a + bySphere[k], 0);
+  const activeSpheres = SPHERE_ORDER.filter(k => bySphere[k] > 0);
+  const sphereCanvas = document.getElementById('chart-sphere');
+  if (totalSphere > 0) {
+    reportCharts.sphere = new Chart(sphereCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: activeSpheres.map(k => SPHERES[k].label),
+        datasets: [{
+          data: activeSpheres.map(k => bySphere[k]),
+          backgroundColor: activeSpheres.map(k => SPHERES[k].color),
+          borderColor: '#FFFFFF',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + fmtDur(ctx.parsed) } }
+        }
+      }
+    });
+    document.getElementById('sphere-legend').innerHTML = activeSpheres.map(k => {
+      const pct = (bySphere[k] / totalSphere * 100).toFixed(1);
+      return '<div class="item"><span class="swatch" style="background:' + SPHERES[k].color + '"></span>' +
+        '<span>' + escapeHtml(SPHERES[k].label) + '</span>' +
+        '<span class="pct">' + pct + '% &middot; ' + fmtDur(bySphere[k]) + '</span></div>';
+    }).join('');
+  } else {
+    sphereCanvas.closest('.chart-box').innerHTML = '<div class="empty-state">No task time in range.</div>';
+  }
+
+  // 2. Pillar horizontal bar
+  const pillarMins = HFH_PILLARS.map(p =>
+    entries.reduce((a, e) => a + (e.pillars.includes(p) ? entryDurationMins(e) : 0), 0)
+  );
+  reportCharts.pillar = new Chart(document.getElementById('chart-pillar'), {
+    type: 'bar',
+    data: {
+      labels: HFH_PILLARS,
+      datasets: [{ data: pillarMins, backgroundColor: '#1E293B', borderRadius: 4, barThickness: 22 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + fmtDur(ctx.parsed.x) } }
+      },
+      scales: {
+        x: {
+          beginAtZero: true, grid: { color: '#E2E8F0' },
+          title: { display: true, text: 'Minutes' },
+          ticks: { precision: 0 }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // 3. Daily activity line
+  const dayLabels = [], dayVals = [];
+  const byDay = {};
+  inRange.forEach(s => { byDay[s.date] = (byDay[s.date] || 0) + shiftDurationMins(s); });
+  const startD = from ? new Date(from + 'T12:00:00') : new Date(Object.keys(byDay).sort()[0] + 'T12:00:00');
+  const endD = to ? new Date(to + 'T12:00:00') : new Date(Object.keys(byDay).sort().pop() + 'T12:00:00');
+  for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+    const key = localDateStr(d);
+    dayLabels.push(d.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+    dayVals.push(Math.floor((byDay[key] || 0) / 60 * 100) / 100);
+  }
+  reportCharts.daily = new Chart(document.getElementById('chart-daily'), {
+    type: 'line',
+    data: {
+      labels: dayLabels,
+      datasets: [{
+        data: dayVals,
+        borderColor: '#1D4ED8',
+        backgroundColor: '#1D4ED8',
+        borderWidth: 2,
+        pointRadius: 2.5,
+        tension: 0.2,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + fmtDur(Math.floor(ctx.parsed.y * 60)) } }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#E2E8F0' }, title: { display: true, text: 'Hours' } },
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 14 } }
+      }
+    }
+  });
+}
+
+/* =====================================================================
+   Magnet Story Builder
+===================================================================== */
+function renderMagnet() {
+  const el = document.getElementById('screen-magnet');
+  if (!el.dataset.init) {
+    el.dataset.init = '1';
+    const today = new Date();
+    const ninetyAgo = new Date(today.getTime() - 90 * 24 * 60 * 60000);
+    el.innerHTML =
+      '<h2 class="screen-title">Magnet Story Builder</h2>' +
+
+      // ---- Step 1
+      '<div class="card">' +
+        '<div class="step-header"><span class="step-num">1</span><h3 style="margin:0">Select Evidence</h3></div>' +
+        '<div class="filters-grid">' +
+          '<div><label class="field-label" for="mg-from" style="margin-top:0">From</label><input type="date" id="mg-from" value="' + localDateStr(ninetyAgo) + '"></div>' +
+          '<div><label class="field-label" for="mg-to" style="margin-top:0">To</label><input type="date" id="mg-to" value="' + localDateStr(today) + '"></div>' +
+          '<div><label class="field-label" for="mg-project" style="margin-top:0">Project</label><input type="text" id="mg-project" placeholder="Filter by project"></div>' +
+          '<div style="min-width:220px"><label class="field-label" style="margin-top:0">Sphere</label>' +
+            '<div class="inline-checks">' + SPHERE_ORDER.map(k =>
+              '<label class="check-row" for="mg-sph-' + k + '"><input type="checkbox" id="mg-sph-' + k + '" class="mg-sphere" value="' + k + '" checked> ' + k + '</label>'
+            ).join('') + '</div>' +
+          '</div>' +
+          '<div><label class="check-row" for="mg-seed-only" style="margin-top:0"><input type="checkbox" id="mg-seed-only"> Magnet Seeds only</label></div>' +
+          '<div><button class="btn btn-primary" id="mg-show">Show Entries</button></div>' +
+        '</div>' +
+        '<div id="mg-results" style="margin-top:14px"></div>' +
+      '</div>' +
+
+      // ---- Step 2
+      '<div class="card" id="mg-step2" style="display:none">' +
+        '<div class="step-header"><span class="step-num">2</span><h3 style="margin:0">Narrative Fields</h3></div>' +
+        '<label class="field-label" for="mg-title">Title</label>' +
+        '<input type="text" id="mg-title" placeholder="Name of the activity, initiative, or clinical situation">' +
+        '<label class="field-label" for="mg-component">Magnet Model Component</label>' +
+        '<select id="mg-component">' + MAGNET_COMPONENTS.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('') + '</select>' +
+        '<label class="field-label">CNS Sphere(s) of Impact</label>' +
+        sphereChecks('mg-spheres', [], 'mg-sf') +
+        '<label class="field-label">HFH Pillar(s)</label>' +
+        pillarChecks('mg-pillars', [], 'mg-pf') +
+        '<label class="field-label" for="mg-setting">Setting / Context</label>' +
+        '<textarea id="mg-setting" rows="3"></textarea>' +
+        '<label class="field-label" for="mg-problem">Problem or Gap Identified</label>' +
+        '<textarea id="mg-problem" rows="4"></textarea>' +
+        '<label class="field-label" for="mg-actions">CNS Actions and Interventions</label>' +
+        '<textarea id="mg-actions" rows="7"></textarea>' +
+        '<label class="field-label" for="mg-participants">Participants</label>' +
+        '<textarea id="mg-participants" rows="3" placeholder="List names, credentials, roles, and departments of all individuals involved."></textarea>' +
+        '<label class="field-label" for="mg-outcomes">Outcomes</label>' +
+        '<textarea id="mg-outcomes" rows="4"></textarea>' +
+        '<label class="check-row" for="mg-dissem" style="margin-top:14px"><input type="checkbox" id="mg-dissem"> This work was published or presented externally</label>' +
+        '<div id="mg-dissem-wrap" style="display:none">' +
+          '<label class="field-label" for="mg-dissem-text">Citation / dissemination details</label>' +
+          '<textarea id="mg-dissem-text" rows="3"></textarea>' +
+        '</div>' +
+      '</div>' +
+
+      // ---- Step 3
+      '<div class="card" id="mg-step3" style="display:none">' +
+        '<div class="step-header"><span class="step-num">3</span><h3 style="margin:0">Export</h3></div>' +
+        '<div class="btn-row" style="justify-content:flex-start">' +
+          '<button class="btn" id="mg-preview">Preview</button>' +
+          '<button class="btn btn-primary" id="mg-export">Export to PDF</button>' +
+        '</div>' +
+      '</div>';
+
+    document.getElementById('mg-show').addEventListener('click', renderMagnetResults);
+    document.getElementById('mg-dissem').addEventListener('change', e => {
+      document.getElementById('mg-dissem-wrap').style.display = e.target.checked ? 'block' : 'none';
+    });
+    document.getElementById('mg-setting').addEventListener('input', () => { magnetDirty.setting = true; });
+    document.getElementById('mg-actions').addEventListener('input', () => { magnetDirty.actions = true; });
+    document.getElementById('mg-preview').addEventListener('click', showMagnetPreview);
+    document.getElementById('mg-export').addEventListener('click', exportMagnetPDF);
+  }
+  renderMagnetResults();
+}
+
+function magnetEligibleEntries() {
+  const from = document.getElementById('mg-from').value;
+  const to = document.getElementById('mg-to').value;
+  const project = document.getElementById('mg-project').value.trim().toLowerCase();
+  const spheres = new Set(Array.from(document.querySelectorAll('.mg-sphere:checked')).map(cb => cb.value));
+  const seedOnly = document.getElementById('mg-seed-only').checked;
+  const out = [];
+  sortedShifts().forEach(s => {
+    if (from && s.date < from) return;
+    if (to && s.date > to) return;
+    s.entries.forEach(e => {
+      if (!spheres.has(e.sphere)) return;
+      if (seedOnly && !e.isMagnetSeed) return;
+      if (project && !(e.project || '').toLowerCase().includes(project)) return;
+      out.push({ entry: e, shiftDate: s.date });
+    });
+  });
+  return out;
+}
+
+function renderMagnetResults() {
+  const box = document.getElementById('mg-results');
+  magnetShown = magnetEligibleEntries();
+  const shownIds = new Set(magnetShown.map(x => x.entry.id));
+  magnetSelected.forEach(id => { if (!shownIds.has(id)) magnetSelected.delete(id); });
+
+  if (!magnetShown.length) {
+    box.innerHTML = '<div class="empty-state" style="padding:18px">No entries match the current filters. Adjust the date range or filters and click &lsquo;Show Entries&rsquo;.</div>';
+    updateMagnetSteps();
+    return;
+  }
+  box.innerHTML =
+    '<div style="margin-bottom:8px"><button class="btn btn-sm" id="mg-select-seeds">Select All Magnet Seeds</button></div>' +
+    '<div class="entry-pick-list">' +
+      magnetShown.map(x => {
+        const e = x.entry;
+        return '<label class="entry-pick" for="mgp-' + e.id + '">' +
+          '<input type="checkbox" id="mgp-' + e.id + '" class="mg-pick" value="' + e.id + '"' + (magnetSelected.has(e.id) ? ' checked' : '') + '>' +
+          '<span class="muted" style="white-space:nowrap">' + escapeHtml(fmtDateShort(x.shiftDate)) + '</span>' +
+          '<span class="grow">' + escapeHtml(e.taskName) + (e.project ? ' <span class="muted">&middot; ' + escapeHtml(e.project) + '</span>' : '') + '</span>' +
+          sphereBadge(e.sphere) +
+          '<span style="white-space:nowrap">' + fmtDur(entryDurationMins(e)) + '</span>' +
+          ((e.notes || e.magnetNote) ? '<span class="muted" title="Has note">&#128221;</span>' : '') +
+          (e.isMagnetSeed ? '<span class="seed-flag" title="Magnet Story Seed">&#9733;</span>' : '') +
+        '</label>';
+      }).join('') +
+    '</div>' +
+    '<div class="tally" id="mg-tally"></div>';
+
+  box.querySelectorAll('.mg-pick').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) magnetSelected.add(cb.value); else magnetSelected.delete(cb.value);
+      updateMagnetSteps();
+    });
+  });
+  document.getElementById('mg-select-seeds').addEventListener('click', () => {
+    magnetShown.forEach(x => { if (x.entry.isMagnetSeed) magnetSelected.add(x.entry.id); });
+    renderMagnetResults();
+  });
+  updateMagnetSteps();
+}
+
+function magnetSelection() {
+  return magnetShown.filter(x => magnetSelected.has(x.entry.id));
+}
+
+function updateMagnetSteps() {
+  const sel = magnetSelection();
+  const tally = document.getElementById('mg-tally');
+  if (tally) {
+    const total = sel.reduce((a, x) => a + entryDurationMins(x.entry), 0);
+    tally.textContent = sel.length + ' ' + (sel.length === 1 ? 'entry' : 'entries') + ' selected, ' + fmtDur(total) + ' total.';
+  }
+  const show = sel.length > 0;
+  document.getElementById('mg-step2').style.display = show ? 'block' : 'none';
+  document.getElementById('mg-step3').style.display = show ? 'block' : 'none';
+  if (show) autofillMagnetForm(sel);
+}
+
+function magnetDateRange(sel) {
+  const dates = sel.map(x => x.shiftDate).sort();
+  const a = dates[0], b = dates[dates.length - 1];
+  return a === b ? fmtDateShort(a) : fmtDateShort(a) + ' – ' + fmtDateShort(b);
+}
+
+function autofillMagnetForm(sel) {
+  // Spheres and pillars: re-derive from selection (user can still edit afterwards)
+  const spheresInSel = new Set(sel.map(x => x.entry.sphere));
+  document.querySelectorAll('input[name="mg-spheres"]').forEach(cb => { cb.checked = spheresInSel.has(cb.value); });
+  const pillarsInSel = new Set(sel.flatMap(x => x.entry.pillars));
+  document.querySelectorAll('input[name="mg-pillars"]').forEach(cb => { cb.checked = pillarsInSel.has(cb.value); });
+
+  if (!magnetDirty.setting) {
+    const parts = [settings.unit, settings.department, settings.hospital].filter(Boolean);
+    document.getElementById('mg-setting').value =
+      (parts.length ? parts.join(', ') + '. ' : '') + 'Evidence period: ' + magnetDateRange(sel) + '.';
+  }
+  if (!magnetDirty.actions) {
+    document.getElementById('mg-actions').value = sel.map(x => {
+      const e = x.entry;
+      let line = '• ' + e.taskName + ' (' + fmtDur(entryDurationMins(e)) + ')';
+      if (e.project) line += ' — Project: ' + e.project;
+      if (e.notes) line += ' — ' + e.notes;
+      if (e.magnetNote) line += ' — ' + e.magnetNote;
+      return line;
+    }).join('\n');
+  }
+}
+
+function magnetFormData() {
+  const sel = magnetSelection();
+  return {
+    title: document.getElementById('mg-title').value.trim() || 'Untitled Exemplar',
+    component: document.getElementById('mg-component').value,
+    spheres: Array.from(document.querySelectorAll('input[name="mg-spheres"]:checked')).map(cb => SPHERES[cb.value].label),
+    pillars: Array.from(document.querySelectorAll('input[name="mg-pillars"]:checked')).map(cb => cb.value),
+    setting: document.getElementById('mg-setting').value.trim(),
+    problem: document.getElementById('mg-problem').value.trim(),
+    actions: document.getElementById('mg-actions').value.trim(),
+    participants: document.getElementById('mg-participants').value.trim(),
+    outcomes: document.getElementById('mg-outcomes').value.trim(),
+    disseminated: document.getElementById('mg-dissem').checked,
+    dissemination: document.getElementById('mg-dissem-text').value.trim(),
+    dateRange: sel.length ? magnetDateRange(sel) : '',
+    selection: sel
+  };
+}
+
+function showMagnetPreview() {
+  const d = magnetFormData();
+  if (!d.selection.length) { toast('Select at least one entry first.', 'warn'); return; }
+  const who = [settings.name, settings.credentials].filter(Boolean).join(', ');
+  const where = [settings.unit, settings.department, settings.hospital].filter(Boolean).join(' / ');
+  const sections = [
+    ['Setting / Context', d.setting],
+    ['Problem or Gap Identified', d.problem],
+    ['CNS Actions and Interventions', d.actions],
+    ['Participants', d.participants],
+    ['Outcomes', d.outcomes]
+  ];
+  if (d.disseminated) sections.push(['Dissemination', d.dissemination || 'Published or presented externally.']);
+
+  const rows = d.selection.map(x => {
+    const e = x.entry;
+    return '<tr>' +
+      '<td>' + escapeHtml(fmtDateShort(x.shiftDate)) + '</td>' +
+      '<td>' + escapeHtml(e.taskName) + '</td>' +
+      '<td>' + escapeHtml(SPHERES[e.sphere].label) + '</td>' +
+      '<td>' + escapeHtml(e.project || '—') + '</td>' +
+      '<td>' + fmtDur(entryDurationMins(e)) + '</td>' +
+      '<td>' + escapeHtml(e.pillars.join(', ') || '—') + '</td>' +
+      '<td class="notes-cell">' + escapeHtml([e.notes, e.magnetNote].filter(Boolean).join(' | ')) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  showModal(
+    '<div class="exemplar">' +
+      '<h1>' + escapeHtml(d.title) + '</h1>' +
+      (who ? '<div class="ex-meta">' + escapeHtml(who) + '</div>' : '') +
+      (where ? '<div class="ex-meta">' + escapeHtml(where) + '</div>' : '') +
+      '<div class="ex-meta">Evidence period: ' + escapeHtml(d.dateRange) + '</div>' +
+      '<div class="ex-meta"><strong>' + escapeHtml(d.component) + '</strong></div>' +
+      (d.pillars.length ? '<div class="ex-meta">HFH Pillars: ' + escapeHtml(d.pillars.join(', ')) + '</div>' : '') +
+      (d.spheres.length ? '<div class="ex-meta">CNS Spheres of Impact: ' + escapeHtml(d.spheres.join(', ')) + '</div>' : '') +
+      '<hr>' +
+      sections.map(s => '<h4>' + escapeHtml(s[0]) + '</h4><p>' + (escapeHtml(s[1]) || '<span class="muted">—</span>') + '</p>').join('') +
+      '<h4>Evidence Log</h4>' +
+      '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+        '<th>Date</th><th>Task</th><th>Sphere</th><th>Project</th><th>Duration</th><th>HFH Pillars</th><th>Notes</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '</div>' +
+    '<div class="modal-actions"><button class="btn btn-primary" data-act="close">Close</button></div>',
+    { wide: true }
+  ).querySelector('[data-act="close"]').addEventListener('click', () => closeModal());
+}
+
+/* ---- PDF export ---- */
+function sphereChartImageFor(entries) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 480; canvas.height = 300;
+  canvas.style.cssText = 'position:fixed;left:-9999px;top:0;';
+  document.body.appendChild(canvas);
+  const by = sphereMinutes(entries);
+  const active = SPHERE_ORDER.filter(k => by[k] > 0);
+  const chart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: active.map(k => SPHERES[k].label + ' — ' + fmtDur(by[k])),
+      datasets: [{
+        data: active.map(k => by[k]),
+        backgroundColor: active.map(k => SPHERES[k].color),
+        borderColor: '#FFFFFF',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: false, animation: false, devicePixelRatio: 2, cutout: '58%',
+      plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } }
+    }
+  });
+  const img = chart.toBase64Image('image/png', 1);
+  chart.destroy();
+  canvas.remove();
+  return img;
+}
+
+function exportMagnetPDF() {
+  const d = magnetFormData();
+  if (!d.selection.length) { toast('Select at least one entry first.', 'warn'); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) { toast('PDF library failed to load. Check your connection.', 'warn'); return; }
+
+  const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 54;
+  const usable = pageW - margin * 2;
+  let y = margin;
+
+  function ensureRoom(needed) {
+    if (y + needed > pageH - 60) { doc.addPage(); y = margin; }
+  }
+  function centered(text, size, style) {
+    doc.setFont('helvetica', style || 'normal');
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(text, usable);
+    lines.forEach(line => {
+      ensureRoom(size * 1.3);
+      doc.text(line, pageW / 2, y, { align: 'center' });
+      y += size * 1.3;
+    });
+  }
+  function section(label, text) {
+    ensureRoom(40);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text(label, margin, y);
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    const lines = doc.splitTextToSize(text || '—', usable);
+    lines.forEach(line => {
+      ensureRoom(14);
+      doc.text(line, margin, y);
+      y += 14;
+    });
+    y += 8;
+  }
+
+  // ---- Page 1: header + narrative
+  centered(d.title, 18, 'bold');
+  y += 4;
+  const who = [settings.name, settings.credentials].filter(Boolean).join(', ');
+  if (who) centered(who, 11);
+  const where = [settings.unit, settings.department, settings.hospital].filter(Boolean).join(' / ');
+  if (where) centered(where, 10);
+  if (d.dateRange) centered('Evidence period: ' + d.dateRange, 10);
+  centered('Magnet Model Component: ' + d.component, 10);
+  if (d.pillars.length) centered('HFH Pillar(s): ' + d.pillars.join(', '), 10);
+  if (d.spheres.length) centered('CNS Sphere(s) of Impact: ' + d.spheres.join(', '), 10);
+  y += 6;
+  doc.setDrawColor(180);
+  doc.line(margin, y, pageW - margin, y);
+  y += 20;
+
+  section('Setting / Context', d.setting);
+  section('Problem or Gap Identified', d.problem);
+  section('CNS Actions and Interventions', d.actions);
+  section('Participants', d.participants);
+  section('Outcomes', d.outcomes);
+  if (d.disseminated) section('Dissemination', d.dissemination || 'Published or presented externally.');
+
+  // ---- Page 2: chart + evidence log
+  doc.addPage();
+  y = margin;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('Time Distribution — Selected Evidence', margin, y);
+  y += 14;
+  try {
+    const img = sphereChartImageFor(d.selection.map(x => x.entry));
+    const imgW = 380, imgH = imgW * (300 / 480);
+    doc.addImage(img, 'PNG', (pageW - imgW) / 2, y, imgW, imgH);
+    y += imgH + 24;
+  } catch (e) {
+    y += 10;
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('Evidence Log', margin, y);
+  y += 10;
+
+  const tableBody = d.selection.map(x => {
+    const e = x.entry;
+    return [
+      fmtDateShort(x.shiftDate),
+      e.taskName,
+      SPHERES[e.sphere].label,
+      e.project || '—',
+      fmtDur(entryDurationMins(e)),
+      e.pillars.join(', ') || '—',
+      [e.notes, e.magnetNote].filter(Boolean).join(' | ')
+    ];
+  });
+  doc.autoTable({
+    startY: y + 6,
+    margin: { left: margin, right: margin, bottom: 64 },
+    head: [['Date', 'Task', 'Sphere', 'Project', 'Duration', 'HFH Pillars', 'Notes/Magnet Note']],
+    body: tableBody,
+    styles: { font: 'helvetica', fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
+    headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    columnStyles: { 0: { cellWidth: 58 }, 4: { cellWidth: 48 } }
+  });
+
+  // ---- Footer on every page
+  const generated = new Date().toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    doc.text('CNS PracticeLog  |  winowie9@msu.edu  |  Generated ' + generated, pageW / 2, pageH - 30, { align: 'center' });
+    doc.setTextColor(0);
+  }
+
+  doc.save('CNS_PracticeLog_' + localDateStr(new Date()) + '.pdf');
+  toast('PDF exported.');
+}
+
+/* =====================================================================
+   Settings
+===================================================================== */
+function renderSettings() {
+  const el = document.getElementById('screen-settings');
+  const hidden = new Set(settings.hiddenTaskNames || []);
+  const customNames = new Set((settings.customTasks || []).map(t => t.name));
+
+  const taskListHtml = SPHERE_ORDER.map(k => {
+    const inSphere = allTasks().filter(t => t.sphere === k);
+    if (!inSphere.length) return '';
+    return '<div class="sphere-group-label">' + escapeHtml(SPHERES[k].label) + '</div>' +
+      inSphere.map(t => {
+        const isHidden = hidden.has(t.name);
+        const isCustom = customNames.has(t.name);
+        return '<div class="task-row' + (isHidden ? ' hidden-task' : '') + '">' +
+          '<span class="task-name">' + escapeHtml(t.name) + (isCustom ? ' <span class="muted small">(custom)</span>' : '') + '</span>' +
+          sphereBadge(t.sphere) +
+          '<button class="btn btn-sm" data-toggle-task="' + escapeHtml(t.name) + '">' + (isHidden ? 'Show' : 'Hide') + '</button>' +
+          (isCustom ? '<button class="btn btn-sm btn-danger" data-del-task="' + escapeHtml(t.name) + '">Delete</button>' : '') +
+          (t.suggestedPillars.length ? '<div class="task-pillars">Suggested pillars: ' + escapeHtml(t.suggestedPillars.join(', ')) + '</div>' : '') +
+        '</div>';
+      }).join('');
+  }).join('');
+
+  el.innerHTML =
+    '<h2 class="screen-title">Settings</h2>' +
+    '<div class="card">' +
+      '<h3>User Profile</h3>' +
+      '<div class="form-row">' +
+        '<div><label class="field-label" for="set-name">Name</label><input type="text" id="set-name" value="' + escapeHtml(settings.name) + '"></div>' +
+        '<div><label class="field-label" for="set-credentials">Credentials</label><input type="text" id="set-credentials" value="' + escapeHtml(settings.credentials) + '" placeholder="e.g., MSN, APRN, AGCNS-BC"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div><label class="field-label" for="set-unit">Unit</label><input type="text" id="set-unit" value="' + escapeHtml(settings.unit) + '"></div>' +
+        '<div><label class="field-label" for="set-department">Department</label><input type="text" id="set-department" value="' + escapeHtml(settings.department) + '"></div>' +
+        '<div><label class="field-label" for="set-hospital">Hospital</label><input type="text" id="set-hospital" value="' + escapeHtml(settings.hospital) + '"></div>' +
+      '</div>' +
+      '<div style="margin-top:16px"><button class="btn btn-primary" id="set-save">Save Profile</button></div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<h3>Task Management</h3>' +
+      '<p class="muted small" style="margin-top:0">Hidden tasks do not appear in the task picker anywhere in the app. Existing logged entries are unaffected.</p>' +
+      taskListHtml +
+      '<h3 style="margin-top:24px">Add Custom Task</h3>' +
+      '<label class="field-label" for="ct-name">Task name</label>' +
+      '<input type="text" id="ct-name">' +
+      '<label class="field-label" for="ct-sphere">Sphere</label>' +
+      '<select id="ct-sphere">' + SPHERE_ORDER.map(k => '<option value="' + k + '">' + escapeHtml(SPHERES[k].label) + '</option>').join('') + '</select>' +
+      '<label class="field-label">Suggested pillars <span class="opt">(optional)</span></label>' +
+      pillarChecks('ct-pillars', [], 'ct-pil') +
+      '<div style="margin-top:14px"><button class="btn btn-primary" id="ct-add">Add Custom Task</button></div>' +
+      '<div style="margin-top:20px;border-top:1px solid var(--color-border);padding-top:16px">' +
+        '<button class="btn btn-danger" id="tasks-reset">Reset task list to defaults</button>' +
+      '</div>' +
+    '</div>';
+
+  document.getElementById('set-save').addEventListener('click', () => {
+    settings.name = document.getElementById('set-name').value.trim();
+    settings.credentials = document.getElementById('set-credentials').value.trim();
+    settings.unit = document.getElementById('set-unit').value.trim();
+    settings.department = document.getElementById('set-department').value.trim();
+    settings.hospital = document.getElementById('set-hospital').value.trim();
+    saveSettings();
+    toast('Profile saved.');
+  });
+
+  el.querySelectorAll('[data-toggle-task]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.toggleTask;
+      const list = settings.hiddenTaskNames || [];
+      if (list.includes(name)) settings.hiddenTaskNames = list.filter(n => n !== name);
+      else settings.hiddenTaskNames = list.concat([name]);
+      saveSettings();
+      renderSettings();
+    });
+  });
+  el.querySelectorAll('[data-del-task]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.delTask;
+      confirmDialog({
+        title: 'Delete custom task?',
+        message: 'Delete the custom task "' + name + '"? Existing logged entries using it are unaffected.',
+        confirmLabel: 'Delete', danger: true,
+        onConfirm: () => {
+          settings.customTasks = (settings.customTasks || []).filter(t => t.name !== name);
+          settings.hiddenTaskNames = (settings.hiddenTaskNames || []).filter(n => n !== name);
+          saveSettings();
+          toast('Custom task deleted.');
+          renderSettings();
+        }
+      });
+    });
+  });
+  document.getElementById('ct-add').addEventListener('click', () => {
+    const name = document.getElementById('ct-name').value.trim();
+    if (!name) { toast('Enter a task name.', 'warn'); return; }
+    if (allTasks().some(t => t.name === name)) { toast('A task with that name already exists.', 'warn'); return; }
+    settings.customTasks = (settings.customTasks || []).concat([{
+      name: name,
+      sphere: document.getElementById('ct-sphere').value,
+      suggestedPillars: Array.from(document.querySelectorAll('input[name="ct-pillars"]:checked')).map(cb => cb.value)
+    }]);
+    saveSettings();
+    toast('Custom task added.');
+    renderSettings();
+  });
+  document.getElementById('tasks-reset').addEventListener('click', () => {
+    confirmDialog({
+      title: 'Reset task list?',
+      message: 'This removes all custom tasks and unhides all default tasks. Logged entries are unaffected.',
+      confirmLabel: 'Reset', danger: true,
+      onConfirm: () => {
+        settings.customTasks = [];
+        settings.hiddenTaskNames = [];
+        saveSettings();
+        toast('Task list reset to defaults.');
+        renderSettings();
+      }
+    });
+  });
+}
+
+/* =====================================================================
+   First-run setup
+===================================================================== */
+function showSetupModal() {
+  const m = showModal(
+    '<h3>Welcome to CNS PracticeLog</h3>' +
+    '<p class="modal-sub">Enter your information to get started.</p>' +
+    '<label class="field-label" for="su-name">Name</label><input type="text" id="su-name">' +
+    '<label class="field-label" for="su-credentials">Credentials</label><input type="text" id="su-credentials" placeholder="e.g., MSN, APRN, AGCNS-BC">' +
+    '<label class="field-label" for="su-unit">Unit</label><input type="text" id="su-unit">' +
+    '<label class="field-label" for="su-department">Department</label><input type="text" id="su-department">' +
+    '<label class="field-label" for="su-hospital">Hospital</label><input type="text" id="su-hospital">' +
+    '<div class="modal-actions" style="justify-content:space-between;align-items:center">' +
+      '<button class="btn-link" id="su-skip">Skip for now</button>' +
+      '<button class="btn btn-primary" id="su-save">Get Started</button>' +
+    '</div>',
+    { dismissible: false }
+  );
+  m.querySelector('#su-save').addEventListener('click', () => {
+    settings.name = m.querySelector('#su-name').value.trim();
+    settings.credentials = m.querySelector('#su-credentials').value.trim();
+    settings.unit = m.querySelector('#su-unit').value.trim();
+    settings.department = m.querySelector('#su-department').value.trim();
+    settings.hospital = m.querySelector('#su-hospital').value.trim();
+    saveSettings();
+    closeModal(m);
+    toast('Welcome, ' + (settings.name || 'CNS') + '!');
+  });
+  m.querySelector('#su-skip').addEventListener('click', () => {
+    saveSettings(); // persist blank settings so setup is not shown again
+    closeModal(m);
+  });
+}
+
+/* =====================================================================
+   Init
+===================================================================== */
+function init() {
+  settings = loadSettings();
+  shifts = loadShifts();
+  if (getOpenShift()) openShiftFromPriorSession = true;
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => showScreen(btn.dataset.screen));
+  });
+
+  showScreen('dashboard');
+
+  if (!localStorage.getItem(LS_SETTINGS)) showSetupModal();
+
+  setInterval(tick, 30000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
