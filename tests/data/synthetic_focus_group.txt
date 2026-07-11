@@ -1,0 +1,8 @@
+MODERATOR: Thanks everyone for joining on January 14, 2025. Let's get started.
+MARISOL: I'm Marisol Vega. I've worked on B4 at St. Aurelia Hospital for six years.
+TANNER: Doctor Okafor's rounding schedule changed once Project Nightingale started.
+MODERATOR: Can you say more about that?
+MARISOL: Sure. Marisol's shift — sorry, my shift — starts at seven. I'm 47 years old, for the record.
+TANNER: You can reach me at 555-867-5309 or tanner@example.com. My badge number is 4482913.
+MODERATOR: And the patient in room 12B was transferred on 3/14/2025, right?
+TANNER: Yes, SAH sent the summary to https://intranet.example.org/notes that day.

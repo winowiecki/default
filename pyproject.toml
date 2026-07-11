@@ -1,0 +1,27 @@
+[project]
+name = "deident"
+version = "0.1.0"
+description = "Local transcript de-identification CLI for qualitative research"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "python-docx>=1.1",
+]
+
+[project.scripts]
+deident = "deident.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/deident"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

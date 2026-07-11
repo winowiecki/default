@@ -1,0 +1,13 @@
+# de-identification outputs — never commit real project data
+cleaned/
+deident_key.json
+review_report.md
+project.yaml
+
+# python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+dist/
