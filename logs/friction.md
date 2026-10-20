@@ -1,0 +1,1 @@
+2026-10-20 | ChatGPT migration plan | help.openai.com returned 403 to WebFetch and curl; used learn.chatgpt.com (.md endpoints) instead. context/ fallback files and prompts/ referenced in CLAUDE.md are absent from this repo.
